@@ -1,5 +1,4 @@
 import type {
-  DisplayGroup,
   DomainDocument,
   DomainObject,
   DomainObjectNode,
@@ -36,7 +35,7 @@ export function render(doc: DomainDocument): string {
   html += `<div class="subtitle">${subtitle}</div>\n\n`;
 
   for (const group of doc.groups) {
-    if (group.kind === "aggregate") {
+    if (group.children.length > 0) {
       html += renderAggregate(group);
     } else {
       html += renderStandalone(group);
@@ -47,32 +46,31 @@ export function render(doc: DomainDocument): string {
   return html;
 }
 
-function renderAggregate(group: DisplayGroup): string {
-  const root = group.root;
+function renderAggregate(root: DomainObjectNode): string {
   let html = `<div class="aggregate">\n`;
   html += `  <div class="aggregate-header">\n`;
   html += `    <span>${escapeHtml(root.object.name)}</span>\n`;
-  if (group.description) {
-    html += `    <span class="desc">${escapeHtml(group.description)}</span>\n`;
+  if (root.object.description) {
+    html += `    <span class="desc">${
+      escapeHtml(root.object.description)
+    }</span>\n`;
   }
   html += `  </div>\n`;
 
   html += renderCard(root.object, 1);
 
-  if (root.children.length > 0) {
-    html += `  <ul class="tree root-tree">\n`;
-    for (const child of root.children) {
-      html += renderTreeNode(child, 2);
-    }
-    html += `  </ul>\n`;
+  html += `  <ul class="tree root-tree">\n`;
+  for (const child of root.children) {
+    html += renderTreeNode(child, 2);
   }
+  html += `  </ul>\n`;
   html += `</div>\n\n`;
   return html;
 }
 
-function renderStandalone(group: DisplayGroup): string {
+function renderStandalone(node: DomainObjectNode): string {
   let html = `<div class="standalone">\n`;
-  html += renderCard(group.root.object, 1);
+  html += renderCard(node.object, 1);
   html += `</div>\n\n`;
   return html;
 }
@@ -130,10 +128,8 @@ interface Stats {
 function collectStats(doc: DomainDocument): Stats {
   const stats: Stats = { aggregates: 0, entities: 0, valueObjects: 0 };
   for (const group of doc.groups) {
-    if (group.kind === "aggregate") {
-      stats.aggregates++;
-    }
-    countObjects(group.root, stats);
+    if (group.children.length > 0) stats.aggregates++;
+    countObjects(group, stats);
   }
   return stats;
 }

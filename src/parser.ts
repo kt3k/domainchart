@@ -1,5 +1,4 @@
 import type {
-  DisplayGroup,
   DomainDocument,
   DomainObject,
   DomainObjectNode,
@@ -155,35 +154,29 @@ function splitTopLevelUnion(s: string): string[] {
  * Infer aggregate boundaries from flat domain object list.
  *
  * 1. Build a reference graph: property types that match domain object names.
- * 2. Find roots: domain objects with an explicit `isAggregateRoot` flag, plus
- *    any domain objects not referenced by another.
- * 3. Roots with children → aggregate, roots without → standalone.
- *
- * Explicit roots are excluded from being children of other trees, even if
- * they are referenced.
+ * 2. Roots: domain objects with an explicit `isAggregateRoot` flag, plus any
+ *    domain objects not referenced by another. Explicit roots are excluded
+ *    from being children of other trees, even if they are referenced.
+ * 3. A root with children renders as an aggregate; without children, as a
+ *    standalone object.
  */
-function inferGroups(objects: DomainObject[]): DisplayGroup[] {
+function inferGroups(objects: DomainObject[]): DomainObjectNode[] {
   const objectMap = new Map<string, DomainObject>();
+  const explicitRoots = new Set<string>();
   for (const obj of objects) {
     objectMap.set(obj.name, obj);
+    if (obj.isAggregateRoot) explicitRoots.add(obj.name);
   }
 
   const referenced = new Set<string>();
   for (const obj of objects) {
-    if (obj.properties) {
-      for (const prop of obj.properties) {
-        for (const name of extractTypeNames(prop.type)) {
-          if (objectMap.has(name)) {
-            referenced.add(name);
-          }
-        }
+    if (!obj.properties) continue;
+    for (const prop of obj.properties) {
+      for (const name of extractTypeNames(prop.type)) {
+        if (objectMap.has(name)) referenced.add(name);
       }
     }
   }
-
-  const explicitRoots = new Set<string>(
-    objects.filter((o) => o.isAggregateRoot).map((o) => o.name),
-  );
 
   const roots = objects.filter(
     (o) => explicitRoots.has(o.name) || !referenced.has(o.name),
@@ -193,13 +186,7 @@ function inferGroups(objects: DomainObject[]): DisplayGroup[] {
     // Block other explicit roots from being absorbed as children of this tree.
     const blocked = new Set<string>(explicitRoots);
     blocked.delete(root.name);
-    const node = buildTree(root, objectMap, blocked);
-    const hasChildren = node.children.length > 0;
-    return {
-      kind: hasChildren ? "aggregate" : "standalone",
-      root: node,
-      description: hasChildren ? root.description : undefined,
-    } as DisplayGroup;
+    return buildTree(root, objectMap, blocked);
   });
 }
 

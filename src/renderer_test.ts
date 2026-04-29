@@ -7,49 +7,45 @@ function makeDoc(): DomainDocument {
     title: "Test Domain",
     groups: [
       {
-        kind: "aggregate",
-        description: "Order aggregate",
-        root: {
-          object: {
-            name: "Order",
-            kind: "entity",
-            description: "Order aggregate",
-            properties: [
-              { name: "id", type: "OrderId" },
-              { name: "items", type: "OrderItem" },
-            ],
-          },
-          children: [
-            {
-              object: {
-                name: "OrderItem",
-                kind: "entity",
-                properties: [{ name: "quantity", type: "number" }],
-              },
-              children: [
-                {
-                  object: {
-                    name: "Money",
-                    kind: "value_object",
-                    properties: [
-                      { name: "amount", type: "number" },
-                      { name: "currency", type: "string" },
-                    ],
-                  },
-                  children: [],
-                },
-              ],
-            },
-            {
-              object: {
-                name: "OrderId",
-                kind: "value_object",
-                properties: [{ name: "value", type: "string" }],
-              },
-              children: [],
-            },
+        object: {
+          name: "Order",
+          kind: "entity",
+          description: "Order aggregate",
+          properties: [
+            { name: "id", type: "OrderId" },
+            { name: "items", type: "OrderItem" },
           ],
         },
+        children: [
+          {
+            object: {
+              name: "OrderItem",
+              kind: "entity",
+              properties: [{ name: "quantity", type: "number" }],
+            },
+            children: [
+              {
+                object: {
+                  name: "Money",
+                  kind: "value_object",
+                  properties: [
+                    { name: "amount", type: "number" },
+                    { name: "currency", type: "string" },
+                  ],
+                },
+                children: [],
+              },
+            ],
+          },
+          {
+            object: {
+              name: "OrderId",
+              kind: "value_object",
+              properties: [{ name: "value", type: "string" }],
+            },
+            children: [],
+          },
+        ],
       },
     ],
   };
@@ -121,15 +117,12 @@ Deno.test("render: standalone object (no aggregate wrapper)", () => {
     title: "Test",
     groups: [
       {
-        kind: "standalone",
-        root: {
-          object: {
-            name: "Config",
-            kind: "value_object",
-            properties: [{ name: "key", type: "string" }],
-          },
-          children: [],
+        object: {
+          name: "Config",
+          kind: "value_object",
+          properties: [{ name: "key", type: "string" }],
         },
+        children: [],
       },
     ],
   };
