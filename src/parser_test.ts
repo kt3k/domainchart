@@ -33,13 +33,12 @@ Deno.test("parse: converts flat models JSON to DomainDocument", () => {
   assertEquals(doc.groups.length, 1);
 
   const group = doc.groups[0];
-  assertEquals(group.kind, "aggregate");
-  assertEquals(group.root.object.name, "Order");
-  assertEquals(group.description, "Order aggregate");
-  assertEquals(group.root.children.length, 2);
+  assertEquals(group.object.name, "Order");
+  assertEquals(group.object.description, "Order aggregate");
+  assertEquals(group.children.length, 2);
   // Children follow property order: id (OrderId) then items (OrderItem)
-  assertEquals(group.root.children[0].object.name, "OrderId");
-  assertEquals(group.root.children[1].object.name, "OrderItem");
+  assertEquals(group.children[0].object.name, "OrderId");
+  assertEquals(group.children[1].object.name, "OrderItem");
 });
 
 Deno.test("parse: infers multiple aggregates", () => {
@@ -71,8 +70,8 @@ Deno.test("parse: infers multiple aggregates", () => {
 
   const doc = parse(json);
   assertEquals(doc.groups.length, 2);
-  assertEquals(doc.groups[0].root.object.name, "Order");
-  assertEquals(doc.groups[1].root.object.name, "Customer");
+  assertEquals(doc.groups[0].object.name, "Order");
+  assertEquals(doc.groups[1].object.name, "Customer");
 });
 
 Deno.test("parse: standalone model (no children)", () => {
@@ -89,7 +88,7 @@ Deno.test("parse: standalone model (no children)", () => {
 
   const doc = parse(json);
   assertEquals(doc.groups.length, 1);
-  assertEquals(doc.groups[0].kind, "standalone");
+  assertEquals(doc.groups[0].children.length, 0);
 });
 
 Deno.test("parse: nested children (transitive references)", () => {
@@ -116,7 +115,7 @@ Deno.test("parse: nested children (transitive references)", () => {
 
   const doc = parse(json);
   assertEquals(doc.groups.length, 1);
-  const root = doc.groups[0].root;
+  const root = doc.groups[0];
   assertEquals(root.children.length, 1);
   const orderItem = root.children[0];
   assertEquals(orderItem.children.length, 1);
@@ -170,7 +169,7 @@ Deno.test("parse: resolves wrapper notations ([], ?, Array<T>, Set<T>)", () => {
 
   const doc = parse(json);
   assertEquals(doc.groups.length, 1);
-  const root = doc.groups[0].root;
+  const root = doc.groups[0];
   assertEquals(root.object.name, "Order");
   assertEquals(root.children.map((c) => c.object.name), [
     "OrderItem",
@@ -201,7 +200,7 @@ Deno.test("parse: resolves union types (Foo | Bar)", () => {
 
   const doc = parse(json);
   assertEquals(doc.groups.length, 1);
-  const root = doc.groups[0].root;
+  const root = doc.groups[0];
   assertEquals(root.object.name, "Order");
   assertEquals(root.children.map((c) => c.object.name), [
     "CreditCard",
@@ -234,7 +233,7 @@ Deno.test("parse: union types compose with wrappers (Array<Foo | Bar>, A[] | B?)
   });
 
   const doc = parse(json);
-  const root = doc.groups[0].root;
+  const root = doc.groups[0];
   assertEquals(root.children.map((c) => c.object.name), [
     "Placed",
     "Shipped",
@@ -278,14 +277,13 @@ Deno.test("parse: isAggregateRoot forces a referenced model into its own root", 
   assertEquals(doc.groups.length, 2);
 
   const order = doc.groups[0];
-  assertEquals(order.root.object.name, "Order");
+  assertEquals(order.object.name, "Order");
   // OrderItem is excluded from Order's tree because it is a forced root
-  assertEquals(order.root.children.map((c) => c.object.name), ["OrderId"]);
+  assertEquals(order.children.map((c) => c.object.name), ["OrderId"]);
 
   const orderItem = doc.groups[1];
-  assertEquals(orderItem.root.object.name, "OrderItem");
-  assertEquals(orderItem.kind, "aggregate");
-  assertEquals(orderItem.root.children.map((c) => c.object.name), [
+  assertEquals(orderItem.object.name, "OrderItem");
+  assertEquals(orderItem.children.map((c) => c.object.name), [
     "OrderItemId",
   ]);
 });
@@ -310,8 +308,8 @@ Deno.test("parse: isAggregateRoot=false does not force a referenced model into a
 
   const doc = parse(json);
   assertEquals(doc.groups.length, 1);
-  assertEquals(doc.groups[0].root.object.name, "Order");
-  assertEquals(doc.groups[0].root.children.map((c) => c.object.name), [
+  assertEquals(doc.groups[0].object.name, "Order");
+  assertEquals(doc.groups[0].children.map((c) => c.object.name), [
     "OrderItem",
   ]);
 });
@@ -334,6 +332,6 @@ Deno.test("parse: resolves composed wrappers (Array<T>?, Set<T>[])", () => {
   });
 
   const doc = parse(json);
-  const root = doc.groups[0].root;
+  const root = doc.groups[0];
   assertEquals(root.children.map((c) => c.object.name), ["OrderItem", "Tag"]);
 });

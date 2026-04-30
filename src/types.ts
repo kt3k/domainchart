@@ -18,15 +18,7 @@ export interface DomainObjectNode {
   children: DomainObjectNode[];
 }
 
-/** A display group: either an aggregate (with children) or a standalone object */
-export interface DisplayGroup {
-  /** "aggregate" if the root has children, "standalone" otherwise */
-  kind: "aggregate" | "standalone";
-  root: DomainObjectNode;
-  description?: string;
-}
-
 export interface DomainDocument {
   title: string;
-  groups: DisplayGroup[];
+  groups: DomainObjectNode[];
 }
